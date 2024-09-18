@@ -12,6 +12,6 @@ func main() {
 		core.FilterPcaps(csvPath, inputPcapFile, outputPcapFile)
 	*/
 	flow_map := core.GetFlowTupleToFlowInfo("ground_truth.csv")
-	core.MatchPcaps("small_pcap_file.pcap", "output_json.json", flow_map)
+	core.MatchPcaps("small_pcap_file.pcap", "output_json", flow_map)
 
 }

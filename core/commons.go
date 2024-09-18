@@ -34,6 +34,7 @@ type PacketInfo struct {
 	Length    int
 	Type      string
 	Direction bool
+	ServerIP  string
 }
 
 var TimeLayout string = "2006-01-02 15:04:05.000000"
@@ -85,11 +86,26 @@ func GetFilteredCSVRecords(csvPath string) [][]string {
 }
 
 func GetTupleFromPacket(packet gopacket.Packet) (Tuple, bool) {
-	ipLayer := packet.Layer(layers.LayerTypeIPv4)
-	if ipLayer == nil {
-		return Tuple{}, false
+	var clientIP, serverIP string
+
+	// Check for IPv4 layer
+	ipv4Layer := packet.Layer(layers.LayerTypeIPv4)
+	if ipv4Layer != nil {
+		ipv4, _ := ipv4Layer.(*layers.IPv4)
+		clientIP = ipv4.SrcIP.String()
+		serverIP = ipv4.DstIP.String()
+	} else {
+		// Check for IPv6 layer
+		ipv6Layer := packet.Layer(layers.LayerTypeIPv6)
+		if ipv6Layer != nil {
+			ipv6, _ := ipv6Layer.(*layers.IPv6)
+			clientIP = ipv6.SrcIP.String()
+			serverIP = ipv6.DstIP.String()
+		} else {
+			// Neither IPv4 nor IPv6 present, return false
+			return Tuple{}, false
+		}
 	}
-	ip, _ := ipLayer.(*layers.IPv4)
 
 	// Extract TCP/UDP information
 	var srcPort, dstPort uint16
@@ -98,20 +114,20 @@ func GetTupleFromPacket(packet gopacket.Packet) (Tuple, bool) {
 		tcp, _ := tcpLayer.(*layers.TCP)
 		srcPort = uint16(tcp.SrcPort)
 		dstPort = uint16(tcp.DstPort)
-		protocol = 6
+		protocol = 6 // TCP
 	} else if udpLayer := packet.Layer(layers.LayerTypeUDP); udpLayer != nil {
 		udp, _ := udpLayer.(*layers.UDP)
 		srcPort = uint16(udp.SrcPort)
 		dstPort = uint16(udp.DstPort)
-		protocol = 11
+		protocol = 17 // UDP
 	} else {
 		return Tuple{}, false
 	}
 
 	// Construct tuple
 	tp := Tuple{
-		ClientIP:   ip.SrcIP.String(),
-		ServerIP:   ip.DstIP.String(),
+		ClientIP:   clientIP,
+		ServerIP:   serverIP,
 		ClientPort: srcPort,
 		ServerPort: dstPort,
 		Protocol:   protocol,
