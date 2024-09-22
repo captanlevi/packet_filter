@@ -8,4 +8,6 @@ with open("../output_json", "r") as f:
 
 
 df = pd.DataFrame(data= data)
+
+
 df.to_csv("../final_flows.csv")
