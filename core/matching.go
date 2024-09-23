@@ -14,7 +14,6 @@ func GetFlowTupleToFlowInfo(csv_path string) map[Tuple][]FlowInfo {
 	records := GetFilteredCSVRecords(csv_path)
 	tuple_map := make(map[Tuple][]FlowInfo)
 	flow_id := 0
-	multiple_count := 0
 	for _, row := range records {
 		clientPort, _ := strconv.ParseUint(row[5], 10, 16)
 		serverPort, _ := strconv.ParseUint(row[6], 10, 16)
@@ -46,7 +45,6 @@ func GetFlowTupleToFlowInfo(csv_path string) map[Tuple][]FlowInfo {
 		flow_id += 1
 
 	}
-	fmt.Println("multiple count", multiple_count)
 	return tuple_map
 }
 
