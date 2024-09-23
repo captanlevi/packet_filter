@@ -1,3 +1,5 @@
 *.csv
 *.json
 *.pcap
+*.pyc
+/data
