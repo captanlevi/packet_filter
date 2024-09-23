@@ -49,8 +49,8 @@ func GetFlowTupleToFlowInfo(csv_path string) map[Tuple][]FlowInfo {
 }
 
 func MatchPcaps(input_pcap_file string, output_json_file string, flow_info_map map[Tuple][]FlowInfo) {
-	count := 0
-	buffer_size := 500
+	discarded_count := 0
+	buffer_size := BUFFER_SIZE
 	fmt.Println(len(flow_info_map))
 	handle, err := pcap.OpenOffline(input_pcap_file)
 	if err != nil {
@@ -61,14 +61,15 @@ func MatchPcaps(input_pcap_file string, output_json_file string, flow_info_map m
 	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
 	buffer := make([]PacketInfo, 0)
 	for packet := range packetSource.Packets() {
-
 		// converting time to UTC as the ground truth has UTC format
 		timestamp := packet.Metadata().Timestamp.UTC()
 		packet_length := packet.Metadata().CaptureLength
 
 		tp, validity := GetTupleFromPacket(packet)
 		if !validity {
-			panic("invalid packet in filtered pcap")
+			// if packet is invaild just continue
+			discarded_count++
+			continue
 		}
 		rev_tp := Tuple{ClientIP: tp.ServerIP, ServerIP: tp.ClientIP, ClientPort: tp.ServerPort, ServerPort: tp.ClientPort, Protocol: tp.Protocol}
 		var packet_info PacketInfo
@@ -87,7 +88,7 @@ func MatchPcaps(input_pcap_file string, output_json_file string, flow_info_map m
 			}
 			if !timing_matched {
 				// if no timings match then skip this packet
-				count++
+				discarded_count++
 				continue
 			}
 
@@ -105,12 +106,14 @@ func MatchPcaps(input_pcap_file string, output_json_file string, flow_info_map m
 
 			if !timing_matched {
 				// if no timings match then skip this packet
-				count++
+				discarded_count++
 				continue
 			}
 
 		} else {
-			panic("packets with non matching tuple found in filtered pcaps")
+			// The tuple and rev-tuple does not match anything from the ground truth file.
+			discarded_count++
+			continue
 		}
 
 		// adding packet to buffer
@@ -132,5 +135,5 @@ func MatchPcaps(input_pcap_file string, output_json_file string, flow_info_map m
 		}
 	}
 
-	fmt.Println(count)
+	fmt.Println(discarded_count)
 }
