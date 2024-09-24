@@ -30,14 +30,12 @@ type FlowInfo struct {
 
 type PacketInfo struct {
 	FlowId    int
-	Timestamp time.Time
+	Timestamp string
 	Length    int
 	Type      string
 	Direction bool
 	ServerIP  string
 }
-
-var TimeLayout string = "2006-01-02 15:04:05.000000"
 
 func GetFilteredCSVRecords(csvPath string) [][]string {
 	file, err := os.Open(csvPath)

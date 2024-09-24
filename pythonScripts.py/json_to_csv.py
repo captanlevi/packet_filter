@@ -2,38 +2,73 @@ import json
 import pandas as pd
 import argparse
 from tqdm import tqdm
+import dask.dataframe as dd
 
-def getTrunatedDF(df, truncate_size = 500):
-    if "Unnamed: 0" in df:
-        df.drop(columns= ["Unnamed: 0"], inplace= True) 
-    mini_dfs = []
+def getTrunatedDF(input_csv_path,output_csv_path,truncate_size = 500):
 
-    for flow_id, mini_df in df.groupby(by= "FlowId"):
-        mini_df.Timestamp = pd.to_datetime(mini_df.Timestamp, format = "mixed")
-        mini_df = mini_df.sort_values(by= "Timestamp")
-        if len(mini_df) > truncate_size:
-            mini_df = mini_df.iloc[:truncate_size]
-        mini_dfs.append(mini_df)
+    ddf = dd.read_csv(input_csv_path)
 
-    return pd.concat(mini_dfs,axis= 0).reindex()
+    print(ddf.head())
+    ddf['Timestamp'] = dd.to_datetime(ddf['Timestamp'], format="mixed")
+
+    truncated_ddf = ddf.groupby('FlowId').apply(
+        lambda df: df.nsmallest(truncate_size, 'Timestamp'), meta=ddf
+    )
+    truncated_ddf.compute().to_csv(output_csv_path, index=False)
+
+
+
+def json_to_csv(input_json_path, output_csv_path, chunk_size=100000):
+
+    def processDfTypes(df : pd.DataFrame):
+        df.loc[:,"Timestamp"] = pd.to_datetime(df.Timestamp)
+        df = df.astype({"FlowId" : "int32", "Length" : "int64"})
+        df["Direction"] = df['Direction'].astype(bool)
+        df["Type"] = df['Type'].astype(str)
+
+
+        return df
+
+
+    with open(input_json_path, "r") as f:
+        # Create a CSV file and write headers on the first iteration
+        first_chunk = True
+        chunk_data = []
+
+        for line in tqdm(f):
+            # Load the JSON line into a dictionary
+            chunk_data.append(json.loads(line))
+            
+            # When the chunk reaches the defined chunk_size, write it to CSV
+            if len(chunk_data) >= chunk_size:
+                df = pd.DataFrame(chunk_data)
+                
+                # Write the DataFrame to CSV, append after the first chunk
+                df.to_csv(output_csv_path, mode='a', index=False, header=first_chunk)
+
+                # After the first write, avoid writing the header again
+                first_chunk = False
+                
+                # Clear the chunk data
+                chunk_data = []
+
+        # Write any remaining data after the loop ends
+        if chunk_data:
+            df = pd.DataFrame(chunk_data)
+            df = processDfTypes(df)           
+            df.to_csv(output_csv_path, mode='a', index=False, header=first_chunk)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument('input_json_path', type= str)
+    parser.add_argument('temp_csv_path', type= str)
     parser.add_argument('output_csv_path', type= str)
     parser.add_argument('truncate_length', type= int)
 
     args = parser.parse_args()
-    input_json_path, output_csv_path = args.input_json_path, args.output_csv_path
+    input_json_path, temp_csv_path ,output_csv_path = args.input_json_path, args.temp_csv_path ,args.output_csv_path
 
-    data = []
-    with open(input_json_path, "r") as f:
-        for line in tqdm(f):
-            data.append(json.loads(line))
-
-
-    df = pd.DataFrame(data= data)
-    df = getTrunatedDF(df= df, truncate_size= args.truncate_length)
-    df.to_csv(output_csv_path, index= False)
+    json_to_csv(input_json_path= input_json_path, output_csv_path= temp_csv_path)
+    getTrunatedDF(input_csv_path= temp_csv_path,output_csv_path= output_csv_path ,truncate_size= args.truncate_length)

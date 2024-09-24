@@ -80,7 +80,7 @@ func MatchPcaps(input_pcap_file string, output_json_file string, flow_info_map m
 			for _, flow_info := range flow_info_slice {
 				// iterating over the flow infos to check the timestamp information
 				if ((flow_info.StartTime == timestamp) || flow_info.StartTime.Before(timestamp)) && flow_info.EndTime.After(timestamp) {
-					packet_info = PacketInfo{FlowId: flow_info.FlowId, Direction: true, Timestamp: timestamp, Length: packet_length, Type: flow_info.Type, ServerIP: tp.ServerIP}
+					packet_info = PacketInfo{FlowId: flow_info.FlowId, Direction: true, Timestamp: timestamp.Format(TimeLayout), Length: packet_length, Type: flow_info.Type, ServerIP: tp.ServerIP}
 					timing_matched = true
 					break
 
@@ -97,7 +97,7 @@ func MatchPcaps(input_pcap_file string, output_json_file string, flow_info_map m
 			timing_matched := false
 			for _, flow_info := range flow_info_slice {
 				if ((flow_info.StartTime == timestamp) || flow_info.StartTime.Before(timestamp)) && flow_info.EndTime.After(timestamp) {
-					packet_info = PacketInfo{FlowId: flow_info.FlowId, Direction: false, Timestamp: timestamp, Length: packet_length, Type: flow_info.Type, ServerIP: tp.ServerIP}
+					packet_info = PacketInfo{FlowId: flow_info.FlowId, Direction: false, Timestamp: timestamp.Format(TimeLayout), Length: packet_length, Type: flow_info.Type, ServerIP: tp.ServerIP}
 					timing_matched = true
 					break
 
