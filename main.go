@@ -6,12 +6,6 @@ import (
 )
 
 func main() {
-	/*
-		csvPath := "ground_truth.csv"
-		inputPcapFile := "small_pcap_file.pcap"
-		outputPcapFile := "filtered_packets.pcap"
-		core.FilterPcaps(csvPath, inputPcapFile, outputPcapFile)
-	*/
 
 	num_args, args := len(os.Args), os.Args
 	if num_args < 4 {

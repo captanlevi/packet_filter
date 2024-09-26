@@ -1,6 +1,7 @@
 package core
 
 import (
+	"bufio"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -26,6 +27,7 @@ type FlowInfo struct {
 	EndTime   time.Time
 	Duration  float64
 	FlowId    int
+	Provider  string
 }
 
 type PacketInfo struct {
@@ -33,8 +35,28 @@ type PacketInfo struct {
 	Timestamp string
 	Length    int
 	Type      string
+	Provider  string
 	Direction bool
 	ServerIP  string
+}
+
+func ReadMapFromFile(file_path string) map[string]struct{} {
+	file, err := os.Open(file_path)
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+		return nil
+	}
+	defer file.Close() // Ensure the file is closed after reading
+
+	scanner := bufio.NewScanner(file)
+	mp := make(map[string]struct{})
+
+	// Iterate over each line
+	for scanner.Scan() {
+		line := scanner.Text() // Get the current line as a string
+		mp[line] = struct{}{}
+	}
+	return mp
 }
 
 func GetFilteredCSVRecords(csvPath string) [][]string {
@@ -51,19 +73,25 @@ func GetFilteredCSVRecords(csvPath string) [][]string {
 	}
 
 	// Define required types and classifiers
-	requiredTypes := map[string]struct{}{
-		"Video": {}, "Social Media": {}, "Software Update": {},
-		"Download": {}, "File Storage": {}, "Conferencing": {},
-		"Music": {}, "Live Video": {}, "Mail": {},
-	}
 
-	reliableClassifiers := map[string]struct{}{
-		"TPED.SNI.TLD": {}, "TPED.SNI.TLDR": {}, "TPE.N.A2P": {},
-		"TPED.SNI.TLD.P.S2T": {}, "TPED.SNI.PGTLD.P": {},
-		"TPED.SNI.EM": {}, "TPED.SNI.TLD.P": {}, "TPED.SNI.TLD.PT": {},
-		"TPED.SNI.PGTLD.P.S2T": {}, "TPED.PT": {}, "TPED.SNI.TLDR.PT": {},
-		"TPED.SNI.TLD.HURL": {},
-	}
+	/*
+		requiredTypes := map[string]struct{}{
+			"Video": {}, "Social Media": {}, "Software Update": {},
+			"Download": {}, "File Storage": {}, "Conferencing": {},
+			"Music": {}, "Live Video": {}, "Mail": {},
+		}
+
+		reliableClassifiers := map[string]struct{}{
+			"TPED.SNI.TLD": {}, "TPED.SNI.TLDR": {}, "TPE.N.A2P": {},
+			"TPED.SNI.TLD.P.S2T": {}, "TPED.SNI.PGTLD.P": {},
+			"TPED.SNI.EM": {}, "TPED.SNI.TLD.P": {}, "TPED.SNI.TLD.PT": {},
+			"TPED.SNI.PGTLD.P.S2T": {}, "TPED.PT": {}, "TPED.SNI.TLDR.PT": {},
+			"TPED.SNI.TLD.HURL": {},
+		}
+	*/
+
+	reliableClassifiers := ReadMapFromFile("GroundTruthFilters/trustedClassifiers.txt")
+	requiredTypes := ReadMapFromFile("GroundTruthFilters/typesToMine.txt")
 
 	// Create a set of tuples
 	filtered_records := make([][]string, 0)

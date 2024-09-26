@@ -29,10 +29,11 @@ func GetFlowTupleToFlowInfo(csv_path string) map[Tuple][]FlowInfo {
 
 		start_time, err_s := time.Parse(TimeLayout, row[0])
 		end_time, err_e := time.Parse(TimeLayout, row[1])
+		flow_provider := row[8]
 		flow_type := row[9]
 		flow_duration, _ := strconv.ParseFloat(row[2], 64)
 
-		flow_info := FlowInfo{StartTime: start_time, EndTime: end_time, Type: flow_type, Duration: flow_duration, FlowId: flow_id}
+		flow_info := FlowInfo{StartTime: start_time, EndTime: end_time, Type: flow_type, Duration: flow_duration, FlowId: flow_id, Provider: flow_provider}
 		if err_s != nil || err_e != nil {
 			panic("time conversion error")
 		}
@@ -80,7 +81,8 @@ func MatchPcaps(input_pcap_file string, output_json_file string, flow_info_map m
 			for _, flow_info := range flow_info_slice {
 				// iterating over the flow infos to check the timestamp information
 				if ((flow_info.StartTime == timestamp) || flow_info.StartTime.Before(timestamp)) && flow_info.EndTime.After(timestamp) {
-					packet_info = PacketInfo{FlowId: flow_info.FlowId, Direction: true, Timestamp: timestamp.Format(TimeLayout), Length: packet_length, Type: flow_info.Type, ServerIP: tp.ServerIP}
+					packet_info = PacketInfo{FlowId: flow_info.FlowId, Direction: true, Timestamp: timestamp.Format(TimeLayout),
+						Length: packet_length, Type: flow_info.Type, ServerIP: tp.ServerIP, Provider: flow_info.Provider}
 					timing_matched = true
 					break
 
@@ -97,7 +99,8 @@ func MatchPcaps(input_pcap_file string, output_json_file string, flow_info_map m
 			timing_matched := false
 			for _, flow_info := range flow_info_slice {
 				if ((flow_info.StartTime == timestamp) || flow_info.StartTime.Before(timestamp)) && flow_info.EndTime.After(timestamp) {
-					packet_info = PacketInfo{FlowId: flow_info.FlowId, Direction: false, Timestamp: timestamp.Format(TimeLayout), Length: packet_length, Type: flow_info.Type, ServerIP: tp.ServerIP}
+					packet_info = PacketInfo{FlowId: flow_info.FlowId, Direction: false, Timestamp: timestamp.Format(TimeLayout),
+						Length: packet_length, Type: flow_info.Type, ServerIP: tp.ServerIP, Provider: flow_info.Provider}
 					timing_matched = true
 					break
 
