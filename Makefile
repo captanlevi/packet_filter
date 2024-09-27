@@ -14,7 +14,7 @@ run:
 	
 
 convertJSONToCSV:
-	python3 pythonScripts.py/json_to_csv.py $(matching_output_path) $(intermidiate_csv_output_path) $(csv_output_path)  $(truncate_length)
+	python3 pythonScripts/json_to_csv.py $(matching_output_path) $(intermidiate_csv_output_path) $(csv_output_path)  $(truncate_length)
 	rm $(matching_output_path)
 	rm $(intermidiate_csv_output_path)
 
