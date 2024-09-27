@@ -96,11 +96,12 @@ func MatchPcaps(input_pcap_file string, output_json_file string, flow_info_map m
 
 		} else if flow_info_slice, exist := flow_info_map[rev_tp]; exist {
 			// rev tuple matched
+			// The rev tuple server IP is the actual server IP as well, casue that is the one that matched
 			timing_matched := false
 			for _, flow_info := range flow_info_slice {
 				if ((flow_info.StartTime == timestamp) || flow_info.StartTime.Before(timestamp)) && flow_info.EndTime.After(timestamp) {
 					packet_info = PacketInfo{FlowId: flow_info.FlowId, Direction: false, Timestamp: timestamp.Format(TimeLayout),
-						Length: packet_length, Type: flow_info.Type, ServerIP: tp.ServerIP, Provider: flow_info.Provider}
+						Length: packet_length, Type: flow_info.Type, ServerIP: rev_tp.ServerIP, Provider: flow_info.Provider}
 					timing_matched = true
 					break
 

@@ -7,3 +7,5 @@ Conferencing
 Music
 Live Video
 Mail
+Speed Test
+VPN
