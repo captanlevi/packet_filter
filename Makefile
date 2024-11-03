@@ -1,9 +1,9 @@
 source_pcap_file_path = "data/small_pcap_file.pcap"
-source_ground_truth_csv_path = "data/ground_truth1.csv"
+source_ground_truth_dir = "data/ground_truth_labels"
 matching_output_path = "data/output_json"
 intermidiate_csv_output_path = "data/temp.csv"
 csv_output_path = "data/final_flows.csv"
-truncate_length = 500
+truncate_length = 100
 
 
 build:

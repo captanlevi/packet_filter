@@ -4,15 +4,38 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/pcap"
 )
 
-func GetFlowTupleToFlowInfo(csv_path string, pcap_file string) map[Tuple][]FlowInfo {
-	mn_timestamp, mx_timestamp := GetStartAndEndTimestampsFromPcap(pcap_file)
-	records := GetFilteredCSVRecordsWithinTime(csv_path, mn_timestamp, mx_timestamp)
+func GetFlowTupleToFlowInfo(csv_paths []string, mn_timestamp time.Time, mx_timestamp time.Time) map[Tuple][]FlowInfo {
+	var wg sync.WaitGroup
+	record_ch := make(chan [][]string, len(csv_paths))
+
+	for worker := 0; worker < NUM_WORKERS; worker++ {
+
+		wg.Add(1)
+		go func(index int) {
+			defer wg.Done()
+			for csv_index := worker; csv_index < len(csv_paths); csv_index += NUM_WORKERS {
+				records := GetFilteredCSVRecordsWithinTime(csv_paths[csv_index], mn_timestamp, mx_timestamp)
+				record_ch <- records
+			}
+		}(worker)
+	}
+
+	wg.Wait()
+	close(record_ch)
+
+	records := make([][]string, 0)
+
+	for channel_records := range record_ch {
+		records = append(records, channel_records...)
+	}
+
 	//records := GetFilteredCSVRecords(csv_path)
 	tuple_map := make(map[Tuple][]FlowInfo)
 	flow_id := 0

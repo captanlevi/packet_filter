@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/google/gopacket"
@@ -272,4 +273,27 @@ func WritePacketInfoBufferToDisk(filepath string, buffer []PacketInfo) error {
 
 	fmt.Printf("Appended %d packets to %s\n", len(buffer), filepath)
 	return nil
+}
+
+func GetCSVFilesFromDirectory(dir string) ([]string, error) {
+	var csvFiles []string
+
+	// Walk through the directory and find CSV files
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Check if the file has a .csv extension
+		if !info.IsDir() && filepath.Ext(path) == ".csv" {
+			csvFiles = append(csvFiles, path)
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return csvFiles, nil
 }
