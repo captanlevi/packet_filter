@@ -10,8 +10,10 @@ import (
 	"github.com/google/gopacket/pcap"
 )
 
-func GetFlowTupleToFlowInfo(csv_path string) map[Tuple][]FlowInfo {
-	records := GetFilteredCSVRecords(csv_path)
+func GetFlowTupleToFlowInfo(csv_path string, pcap_file string) map[Tuple][]FlowInfo {
+	mn_timestamp, mx_timestamp := GetStartAndEndTimestampsFromPcap(pcap_file)
+	records := GetFilteredCSVRecordsWithinTime(csv_path, mn_timestamp, mx_timestamp)
+	//records := GetFilteredCSVRecords(csv_path)
 	tuple_map := make(map[Tuple][]FlowInfo)
 	flow_id := 0
 	for _, row := range records {

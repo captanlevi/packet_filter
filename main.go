@@ -13,7 +13,7 @@ func main() {
 	}
 
 	ground_truth_path, pacp_file_path, output_path := args[1], args[2], args[3]
-	flow_map := core.GetFlowTupleToFlowInfo(ground_truth_path)
+	flow_map := core.GetFlowTupleToFlowInfo(ground_truth_path, pacp_file_path)
 	core.MatchPcaps(pacp_file_path, output_path, flow_map)
 
 }

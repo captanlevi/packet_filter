@@ -25,8 +25,7 @@ def json_to_csv(input_json_path, output_csv_path, chunk_size=100000):
         df = df.astype({"FlowId" : "int32", "Length" : "int64"})
         df["Direction"] = df['Direction'].astype(bool)
         df["Type"] = df['Type'].astype(str)
-
-
+        df["Provider"]  = df["Provider"].astype(str)
         return df
 
 

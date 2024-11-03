@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
+	"github.com/google/gopacket/pcap"
 )
 
 type Tuple struct {
@@ -40,6 +41,40 @@ type PacketInfo struct {
 	ServerIP  string
 }
 
+func GetStartAndEndTimestampsFromPcap(pcap_file string) (time.Time, time.Time) {
+	handle, err := pcap.OpenOffline(pcap_file)
+	if err != nil {
+		log.Fatal("Failed to open PCAP file:", err)
+	}
+	defer handle.Close()
+
+	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
+
+	var mn_timestamp, mx_timestamp time.Time
+
+	first := true
+	for packet := range packetSource.Packets() {
+		timestamp := packet.Metadata().Timestamp.UTC()
+
+		if first {
+			mn_timestamp = timestamp
+			mx_timestamp = timestamp
+			first = false
+		}
+
+		if timestamp.Before(mn_timestamp) {
+			mn_timestamp = timestamp
+		}
+		if timestamp.After(mx_timestamp) {
+			mx_timestamp = timestamp
+		}
+
+	}
+
+	return mn_timestamp, mx_timestamp
+
+}
+
 func ReadMapFromFile(file_path string) map[string]struct{} {
 	file, err := os.Open(file_path)
 	if err != nil {
@@ -57,6 +92,63 @@ func ReadMapFromFile(file_path string) map[string]struct{} {
 		mp[line] = struct{}{}
 	}
 	return mp
+}
+
+func GetFilteredCSVRecordsWithinTime(csv_path string, mn_timestamp time.Time, mx_timestamp time.Time) [][]string {
+	/*
+		All times are in UTC.Please remember
+	*/
+	file, err := os.Open(csv_path)
+	if err != nil {
+		log.Fatal("Failed to open CSV file:", err)
+	}
+	defer file.Close()
+
+	reliableClassifiers := ReadMapFromFile("GroundTruthFilters/trustedClassifiers.txt")
+	requiredTypes := ReadMapFromFile("GroundTruthFilters/typesToMine.txt")
+
+	// Create a set of tuples
+	filtered_records := make([][]string, 0)
+
+	reader := csv.NewReader(file)
+
+	// Skip the header line
+	if _, err := reader.Read(); err != nil {
+		log.Fatal("Failed to read CSV first line:", err)
+	}
+	for {
+		row, err := reader.Read()
+		if err != nil {
+			// Check for the end of file
+			if err.Error() == "EOF" {
+				break
+			}
+			log.Fatal("Failed to read CSV line:", err)
+		}
+
+		// now filtering
+		if _, ok := requiredTypes[row[9]]; !ok {
+			continue
+		}
+		if _, ok := reliableClassifiers[row[10]]; !ok {
+			continue
+		}
+
+		// filtering on time
+		start_time, err_s := time.Parse(TimeLayout, row[0])
+		if err_s != nil {
+			panic("time conversion error")
+		}
+
+		if start_time.Before(mn_timestamp) || start_time.After(mx_timestamp) {
+			continue
+		}
+
+		filtered_records = append(filtered_records, row)
+
+	}
+
+	return filtered_records
 }
 
 func GetFilteredCSVRecords(csvPath string) [][]string {
