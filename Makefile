@@ -10,7 +10,7 @@ build:
 	go build -o bin/main main.go
 
 run:
-	go run main.go $(source_ground_truth_csv_path) $(source_pcap_file_path) $(matching_output_path)
+	go run main.go $(source_ground_truth_dir) $(source_pcap_file_path) $(matching_output_path)
 	
 
 convertJSONToCSV:

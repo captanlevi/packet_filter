@@ -19,6 +19,7 @@ func main() {
 	}
 	fmt.Println(ground_truth_csvs)
 	mn_timestamp, mx_timestamp := core.GetStartAndEndTimestampsFromPcap(pacp_file_path)
+	fmt.Println(mn_timestamp, mx_timestamp)
 	flow_map := core.GetFlowTupleToFlowInfo(ground_truth_csvs, mn_timestamp, mx_timestamp)
 	core.MatchPcaps(pacp_file_path, output_path, flow_map)
 }
