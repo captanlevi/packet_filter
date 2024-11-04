@@ -105,12 +105,13 @@ func GetFilteredCSVRecordsWithinTime(csv_path string, mn_timestamp time.Time, mx
 	}
 	defer file.Close()
 
+	discarded_records := 0
+
 	reliableClassifiers := ReadMapFromFile("GroundTruthFilters/trustedClassifiers.txt")
 	requiredTypes := ReadMapFromFile("GroundTruthFilters/typesToMine.txt")
 
 	// Create a set of tuples
 	filtered_records := make([][]string, 0)
-
 	reader := csv.NewReader(file)
 
 	// Skip the header line
@@ -137,11 +138,13 @@ func GetFilteredCSVRecordsWithinTime(csv_path string, mn_timestamp time.Time, mx
 
 		// filtering on time
 		start_time, err_s := time.Parse(TimeLayout, row[0])
+
 		if err_s != nil {
 			panic("time conversion error")
 		}
 
 		if start_time.Before(mn_timestamp) || start_time.After(mx_timestamp) {
+			discarded_records++
 			continue
 		}
 
@@ -149,6 +152,7 @@ func GetFilteredCSVRecordsWithinTime(csv_path string, mn_timestamp time.Time, mx
 
 	}
 
+	fmt.Println(csv_path, "discarded records (time wise) = ", discarded_records)
 	return filtered_records
 }
 

@@ -77,6 +77,7 @@ func GetFlowTupleToFlowInfo(csv_paths []string, mn_timestamp time.Time, mx_times
 func MatchPcaps(input_pcap_file string, output_json_file string, flow_info_map map[Tuple][]FlowInfo) {
 	discarded_count := 0
 	buffer_size := BUFFER_SIZE
+	fmt.Println("Records extracted")
 	fmt.Println(len(flow_info_map))
 	handle, err := pcap.OpenOffline(input_pcap_file)
 	if err != nil {
@@ -163,6 +164,6 @@ func MatchPcaps(input_pcap_file string, output_json_file string, flow_info_map m
 			panic(err.Error())
 		}
 	}
-
+	fmt.Println("Packets discarded from PCAP")
 	fmt.Println(discarded_count)
 }
