@@ -72,8 +72,9 @@ func GetStartAndEndTimestampsFromPcap(pcap_file string) (time.Time, time.Time) {
 			mx_timestamp = timestamp
 		}
 
-		if count%100000 == 0 {
-			fmt.Println("Processed 100000 packets")
+		if count%1000000 == 0 {
+			count = 0
+			fmt.Println("Processed 1000000 packets")
 		}
 
 	}

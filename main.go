@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"packet_matching/core"
+	"time"
 )
 
 func main() {
@@ -19,10 +20,14 @@ func main() {
 		panic("error reading csv files")
 	}
 	fmt.Println(ground_truth_csvs)
-	mn_timestamp, mx_timestamp := core.GetStartAndEndTimestampsFromPcap(pacp_file_path)
+	var mn_timestamp, mx_timestamp time.Time
+	mn_timestamp = time.Date(2023, time.January, 1, 0, 0, 0, 0, time.UTC)
+	mx_timestamp = time.Now().UTC()
+	if len(ground_truth_csvs) > 1 {
+		// In case we have more than one csv, we need to filter the recodrs according to time
+		mn_timestamp, mx_timestamp = core.GetStartAndEndTimestampsFromPcap(pacp_file_path)
+	}
 
-	//mn_timestamp, _ := time.Parse("2006-01-02 15:04:05.000000 -0700 MST", "2024-09-18 08:02:52.138703 +0000 UTC")
-	//mx_timestamp, _ := time.Parse("2006-01-02 15:04:05.000000 -0700 MST", "2024-09-20 06:52:26.436679 +0000 UTC")
 	fmt.Println("min max timestamps = ", mn_timestamp, mx_timestamp)
 	flow_map := core.GetFlowTupleToFlowInfo(ground_truth_csvs, mn_timestamp, mx_timestamp)
 	fmt.Println(len(flow_map))
