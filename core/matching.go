@@ -21,6 +21,7 @@ func GetFlowTupleToFlowInfo(csv_paths []string, mn_timestamp time.Time, mx_times
 		go func(index int) {
 			defer wg.Done()
 			for csv_index := worker; csv_index < len(csv_paths); csv_index += NUM_WORKERS {
+				fmt.Println("csv_index = ", csv_index, " Worker= ", worker, " csv_name= ", csv_paths[csv_index])
 				records := GetFilteredCSVRecordsWithinTime(csv_paths[csv_index], mn_timestamp, mx_timestamp)
 				record_ch <- records
 			}
