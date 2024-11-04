@@ -43,6 +43,7 @@ type PacketInfo struct {
 }
 
 func GetStartAndEndTimestampsFromPcap(pcap_file string) (time.Time, time.Time) {
+	fmt.Println("starting timestamp iteration")
 	handle, err := pcap.OpenOffline(pcap_file)
 	if err != nil {
 		log.Fatal("Failed to open PCAP file:", err)
@@ -71,7 +72,7 @@ func GetStartAndEndTimestampsFromPcap(pcap_file string) (time.Time, time.Time) {
 		}
 
 	}
-
+	fmt.Println("Ending timestamp iteration")
 	return mn_timestamp, mx_timestamp
 
 }
