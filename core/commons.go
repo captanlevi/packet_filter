@@ -55,9 +55,10 @@ func GetStartAndEndTimestampsFromPcap(pcap_file string) (time.Time, time.Time) {
 	var mn_timestamp, mx_timestamp time.Time
 
 	first := true
+	count := 0
 	for packet := range packetSource.Packets() {
 		timestamp := packet.Metadata().Timestamp.UTC()
-
+		count++
 		if first {
 			mn_timestamp = timestamp
 			mx_timestamp = timestamp
@@ -69,6 +70,10 @@ func GetStartAndEndTimestampsFromPcap(pcap_file string) (time.Time, time.Time) {
 		}
 		if timestamp.After(mx_timestamp) {
 			mx_timestamp = timestamp
+		}
+
+		if count%100000 == 0 {
+			fmt.Println("Processed 100000 packets")
 		}
 
 	}
