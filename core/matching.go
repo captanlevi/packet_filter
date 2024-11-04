@@ -15,17 +15,16 @@ func GetFlowTupleToFlowInfo(csv_paths []string, mn_timestamp time.Time, mx_times
 	var wg sync.WaitGroup
 	record_ch := make(chan [][]string, len(csv_paths))
 
-	for worker := 0; worker < NUM_WORKERS; worker++ {
-
+	for worker_id := 0; worker_id < NUM_WORKERS; worker_id++ {
 		wg.Add(1)
-		go func(index int) {
+		go func(worker int) {
 			defer wg.Done()
 			for csv_index := worker; csv_index < len(csv_paths); csv_index += NUM_WORKERS {
 				fmt.Println("csv_index = ", csv_index, " Worker= ", worker, " csv_name= ", csv_paths[csv_index])
 				records := GetFilteredCSVRecordsWithinTime(csv_paths[csv_index], mn_timestamp, mx_timestamp)
 				record_ch <- records
 			}
-		}(worker)
+		}(worker_id)
 	}
 
 	wg.Wait()
