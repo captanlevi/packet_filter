@@ -76,6 +76,7 @@ func GetFlowTupleToFlowInfo(csv_paths []string, mn_timestamp time.Time, mx_times
 
 func MatchPcaps(input_pcap_file string, output_json_file string, flow_info_map map[Tuple][]FlowInfo) {
 	discarded_count := 0
+	no_match_discarded := 0
 	found_count := 0
 	buffer_size := BUFFER_SIZE
 	fmt.Println("Records extracted")
@@ -96,7 +97,7 @@ func MatchPcaps(input_pcap_file string, output_json_file string, flow_info_map m
 		tp, validity := GetTupleFromPacket(packet)
 		if !validity {
 			// if packet is invaild just continue
-			discarded_count++
+			//discarded_count++
 			continue
 		}
 		rev_tp := Tuple{ClientIP: tp.ServerIP, ServerIP: tp.ClientIP, ClientPort: tp.ServerPort, ServerPort: tp.ClientPort, Protocol: tp.Protocol}
@@ -108,7 +109,7 @@ func MatchPcaps(input_pcap_file string, output_json_file string, flow_info_map m
 			timing_matched := false
 			for _, flow_info := range flow_info_slice {
 				// iterating over the flow infos to check the timestamp information
-				if ((flow_info.StartTime == timestamp) || flow_info.StartTime.Before(timestamp)) && flow_info.EndTime.After(timestamp) {
+				if flow_info.StartTime.Add(-TIME_BUFFER).Before(timestamp) && flow_info.EndTime.Add(TIME_BUFFER).After(timestamp) {
 					packet_info = PacketInfo{FlowId: flow_info.FlowId, Direction: true, Timestamp: timestamp.Format(TimeLayout),
 						Length: packet_length, Type: flow_info.Type, ServerIP: tp.ServerIP, Provider: flow_info.Provider}
 					timing_matched = true
@@ -128,7 +129,7 @@ func MatchPcaps(input_pcap_file string, output_json_file string, flow_info_map m
 			found_count++
 			timing_matched := false
 			for _, flow_info := range flow_info_slice {
-				if ((flow_info.StartTime == timestamp) || flow_info.StartTime.Before(timestamp)) && flow_info.EndTime.After(timestamp) {
+				if flow_info.StartTime.Add(-TIME_BUFFER).Before(timestamp) && flow_info.EndTime.Add(TIME_BUFFER).After(timestamp) {
 					packet_info = PacketInfo{FlowId: flow_info.FlowId, Direction: false, Timestamp: timestamp.Format(TimeLayout),
 						Length: packet_length, Type: flow_info.Type, ServerIP: rev_tp.ServerIP, Provider: flow_info.Provider}
 					timing_matched = true
@@ -145,7 +146,7 @@ func MatchPcaps(input_pcap_file string, output_json_file string, flow_info_map m
 
 		} else {
 			// The tuple and rev-tuple does not match anything from the ground truth file.
-			discarded_count++
+			no_match_discarded++
 			continue
 		}
 
@@ -168,5 +169,5 @@ func MatchPcaps(input_pcap_file string, output_json_file string, flow_info_map m
 		}
 	}
 	fmt.Println("Packets found (matched 5 tuple) but discarded from PCAP because of timestamp filtering")
-	fmt.Println(found_count, discarded_count)
+	fmt.Println(found_count, discarded_count, no_match_discarded)
 }
