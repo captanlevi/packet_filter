@@ -2,6 +2,10 @@ import os
 import pandas as pd
 import ipaddress
 
+import os
+import pandas as pd
+import ipaddress
+
 def check_ip_type(ip):
     try:
         # Create an IP address object
@@ -15,15 +19,27 @@ def check_ip_type(ip):
     except ValueError:
         return "Invalid IP address"
 
-def getIpsForType(csv_path,types = ["Conferencing"]):
+def getIpsForType(csv_path,types = ["Conferencing"], top_N = 10):
     ground_df = pd.read_csv(csv_path)
     classifiers = []
+
+    with open("../GroundTruthFilters/trustedClassifiers.txt", "r") as f:
+        for line in f:
+            classifiers.append(line.strip().replace("\n", ""))
+
     ground_df  = ground_df[ground_df.classifier.isin(classifiers)]
     ground_df = ground_df[ground_df.type.isin(types)]
-    ips = ground_df.server_ip.unique().tolist() + ground_df.client_ip.unique().tolist()
-    ips = set((filter(lambda x : check_ip_type(x) == "Public", ips)))
-    ips = list(ips)
-    return ips
+
+
+    provider_ip_counts  = ground_df.groupby(["provider", "server_ip"]).size().reset_index(name= "count")
+
+    ips = set()
+    for _, mini_df in provider_ip_counts.groupby("provider"):
+        mini_df.sort_values(by= "count", ascending= False, inplace= True)
+        top_ips = mini_df.iloc[:top_N]["server_ip"].values.tolist()
+        ips.update(top_ips)
+    
+    return list(ips)
 
 
 
