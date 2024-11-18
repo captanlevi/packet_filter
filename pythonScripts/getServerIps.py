@@ -31,8 +31,8 @@ def getIpsForType(csv_path,types = ["Conferencing"]):
 if __name__ == "__main__":
 
     ips = []
-    ground_truth_dir = "data/ground_truth_labels"
-    out_path = "conf_ips.txt"
+    ground_truth_dir = "../../data/ground_truth_labels"
+    out_path = "../../data/conf_ips.txt"
 
     for csv in os.listdir(path= ground_truth_dir):
         if csv.endswith(".csv") == False:
