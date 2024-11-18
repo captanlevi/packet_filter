@@ -18,10 +18,6 @@ def check_ip_type(ip):
 def getIpsForType(csv_path,types = ["Conferencing"]):
     ground_df = pd.read_csv(csv_path)
     classifiers = []
-    with open("GroundTruthFilters/trustedClassifiers.txt", "r") as f:
-        for line in f:
-            classifiers.append(line.strip().replace("\n", ""))
-
     ground_df  = ground_df[ground_df.classifier.isin(classifiers)]
     ground_df = ground_df[ground_df.type.isin(types)]
     ips = ground_df.server_ip.unique().tolist() + ground_df.client_ip.unique().tolist()
@@ -44,3 +40,7 @@ if __name__ == "__main__":
         csv_path = os.path.join(ground_truth_dir,csv)
         ips.extend(getIpsForType(csv_path= csv_path))
 
+
+    ips = list(set(ips))
+    with open(out_path, "w") as f:
+        f.write(",".join(ips))
